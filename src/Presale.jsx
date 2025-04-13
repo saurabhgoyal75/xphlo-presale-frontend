@@ -8,7 +8,7 @@ export default function Presale() {
   const [tokens, setTokens] = useState(0);
   const tokenPrice = 0.05;
 
-  const contractAddress = '0x0359b2A68B37a3CE4f750037FcD3b3f478cB55c1';
+  const contractAddress = "0xC63DaaAC8F02E5F7Aeb33650d1eD6eFB85CB0cc8";
 
   const ethUsdPrice = 1700; // must match your contract ETH price exactly
 
