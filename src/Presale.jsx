@@ -34,58 +34,69 @@ export default function Presale() {
 
   const handleProceed = async () => {
     if (currency === 'CARD') {
-      alert('Currently only ETH payments are enabled for testnet.');
+      alert('Currently only crypto payments are enabled.');
       return;
     }
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install MetaMask');
+    
+    if (!window.ethereum) {
+      alert('Please install MetaMask.');
       return;
     }
   
     try {
-  
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
-
+      const userAddress = await signer.getAddress();
+  
       const contract = new ethers.Contract(contractAddress, XPhloABI, signer);
-
+  
       if (currency === 'ETH') {
         const tx = await contract.buyWithETH({ value: ethers.parseEther(investment) });
         await tx.wait();
         alert(`Purchased ${tokens} xPhlo successfully with ETH! Tx Hash: ${tx.hash}`);
-      } 
-      
-      if (currency === 'USDC' || currency === 'USDT') {
+      } else if (currency === 'USDC' || currency === 'USDT') {
         const stablecoinAddress = currency === 'USDC' 
           ? '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' 
           : '0xdAC17F958D2ee523a2206206994597C13D831ec7';
-
+  
         const stablecoinABI = [
           'function approve(address spender, uint256 amount) external returns (bool)',
-          'function decimals() external view returns (uint8)'
+          'function allowance(address owner, address spender) external view returns (uint256)',
+          'function decimals() external view returns (uint8)',
+          'function balanceOf(address owner) external view returns (uint256)'
         ];
-
+  
         const stablecoinContract = new ethers.Contract(stablecoinAddress, stablecoinABI, signer);
-        
         const decimals = await stablecoinContract.decimals();
         const amountToSend = ethers.parseUnits(investment, decimals);
-
-        const approveTx = await stablecoinContract.approve(contractAddress, amountToSend);
-        await approveTx.wait();
-
+  
+        // Check user's balance
+        const balance = await stablecoinContract.balanceOf(userAddress);
+        if (balance < amountToSend) {
+          alert(`Insufficient ${currency} balance.`);
+          return;
+        }
+  
+        // Check allowance
+        const allowance = await stablecoinContract.allowance(userAddress, contractAddress);
+        if (allowance < amountToSend) {
+          const approveTx = await stablecoinContract.approve(contractAddress, amountToSend);
+          await approveTx.wait();
+        }
+  
         const buyTx = await contract.buyWithStablecoin(stablecoinAddress, amountToSend);
         await buyTx.wait();
-
+  
         alert(`Purchased ${tokens} xPhlo successfully with ${currency}! Tx Hash: ${buyTx.hash}`);
       }
-
+  
     } catch (error) {
       console.error('Transaction Error:', error);
-      alert(`Transaction failed: ${error.message}`);
+      alert(`Transaction failed: ${error.reason || error.message}`);
     }
   };
-
+  
   return (
     <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', borderRadius: '8px' }}>
       <h2>xPhlo Presale Stage 1</h2>
