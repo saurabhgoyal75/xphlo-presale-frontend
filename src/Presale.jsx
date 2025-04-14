@@ -33,7 +33,7 @@ export default function Presale() {
   
 
   const handleProceed = async () => {
-    if (currency === 'CARD' || currency === 'USDC' || currency === 'USDT') {
+    if (currency === 'CARD') {
       alert('Currently only ETH payments are enabled for testnet.');
       return;
     }
