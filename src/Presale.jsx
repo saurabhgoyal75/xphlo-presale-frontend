@@ -16,14 +16,20 @@ export default function Presale() {
     const calculateTokens = () => {
       const investmentValue = parseFloat(investment);
       if (!isNaN(investmentValue)) {
-        let usdValue = investmentValue * ethUsdPrice;
-        setTokens((usdValue / tokenPrice).toFixed(2));
+        if (currency === 'ETH') {
+          setTokens((investmentValue * 1700 / tokenPrice).toFixed(2)); // for ETH, multiply by ETH price in USD
+        } else if (currency === 'USDC' || currency === 'USDT') {
+          setTokens((investmentValue / tokenPrice).toFixed(2)); // USDC/USDT = 1:1 USD
+        } else {
+          setTokens(0);
+        }
       } else {
         setTokens(0);
       }
     };
     calculateTokens();
-  }, [investment]);
+  }, [investment, currency]);
+  
   
 
   const handleProceed = async () => {
